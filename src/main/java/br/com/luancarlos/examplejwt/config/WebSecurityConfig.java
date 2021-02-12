@@ -1,27 +1,25 @@
 package br.com.luancarlos.examplejwt.config;
 
-import br.com.luancarlos.examplejwt.service.CustomUserDetails;
-import org.springframework.beans.factory.annotation.Autowired;
+import br.com.luancarlos.examplejwt.security.jwt.JwtConfigurer;
+import br.com.luancarlos.examplejwt.security.jwt.TokenProvider;
 import org.springframework.context.annotation.Bean;
 import org.springframework.http.HttpMethod;
-import org.springframework.security.config.annotation.authentication.builders.AuthenticationManagerBuilder;
 import org.springframework.security.config.annotation.method.configuration.EnableGlobalMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configuration.WebSecurityConfigurerAdapter;
-import org.springframework.security.core.userdetails.User;
-import org.springframework.security.core.userdetails.UserDetails;
-import org.springframework.security.core.userdetails.UserDetailsService;
+import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
-import org.springframework.security.provisioning.InMemoryUserDetailsManager;
 
 @EnableWebSecurity
 @EnableGlobalMethodSecurity(prePostEnabled = true)
 public class WebSecurityConfig extends WebSecurityConfigurerAdapter {
+    private final TokenProvider tokenProvider;
 
-    @Autowired
-    private CustomUserDetails customUserDetails;
+    public WebSecurityConfig(TokenProvider tokenProvider) {
+        this.tokenProvider = tokenProvider;
+    }
 
     @Override
     protected void configure(HttpSecurity http) throws Exception {
@@ -30,21 +28,34 @@ public class WebSecurityConfig extends WebSecurityConfigurerAdapter {
                 .antMatchers(HttpMethod.GET,"/api/product").permitAll()
                 .antMatchers(HttpMethod.POST,"/api/product").authenticated()
                 .antMatchers(HttpMethod.DELETE, "/api/product/**").hasAnyAuthority("ROLE_ADMIN")
-                .antMatchers("/api/user").hasAnyAuthority("ROLE_ADMIN")
-                .antMatchers("/api/user/**").hasAnyAuthority("ROLE_ADMIN")
+                .antMatchers("/api/user").permitAll()
+//                .antMatchers("/api/user").hasAnyAuthority("ROLE_ADMIN")
+                .antMatchers("/api/user/**").permitAll()
+//                .antMatchers("/api/user/**").hasAnyAuthority("ROLE_ADMIN")
+                .antMatchers("/api/authenticate").permitAll()
+                .anyRequest().authenticated()
                 .and()
-                .httpBasic();
+                .sessionManagement()
+                .sessionCreationPolicy(SessionCreationPolicy.STATELESS)
+                .and()
+                .httpBasic()
+                .and()
+                .apply(securityConfigureAdapter());
 
     }
 
-    @Override
-    protected void configure(AuthenticationManagerBuilder auth) throws Exception {
-        auth.userDetailsService(customUserDetails).passwordEncoder(passwordEncoder());
-//        auth.inMemoryAuthentication()
-//                .withUser("user").password("{noop}user").roles("USER")
-//                .and()
-//                .withUser("admin").password("{noop}admin").roles("ADMIN");
+    private JwtConfigurer securityConfigureAdapter() {
+        return new JwtConfigurer(tokenProvider);
     }
+
+//    @Override
+//    protected void configure(AuthenticationManagerBuilder auth) throws Exception {
+//        auth.userDetailsService(customUserDetails).passwordEncoder(passwordEncoder());
+////        auth.inMemoryAuthentication()
+////                .withUser("user").password("{noop}user").roles("USER")
+////                .and()
+////                .withUser("admin").password("{noop}admin").roles("ADMIN");
+//    }
 
 
     @Bean

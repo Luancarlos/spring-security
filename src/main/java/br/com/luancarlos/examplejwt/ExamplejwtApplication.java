@@ -1,9 +1,12 @@
 package br.com.luancarlos.examplejwt;
 
+import br.com.luancarlos.examplejwt.config.SecurityVariableYml;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.JwtException;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.CommandLineRunner;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 
@@ -11,6 +14,7 @@ import java.util.Date;
 
 @SpringBootApplication
 public class ExamplejwtApplication {
+
 
     public static void main(String[] args) {
 
